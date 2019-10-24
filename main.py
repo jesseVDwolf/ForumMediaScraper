@@ -34,6 +34,7 @@ def create_stream_list_regex(stream_id: str):
     """
     Given an id of a number smaller than 100, this function will give back
     compiled regex that can be used to match any number above this id.
+
     :param stream_id:
     :return <class '_sre.SRE_Pattern'>:
     """
@@ -75,7 +76,7 @@ def main():
         response = get(FORUM_HOME_PAGE_URL)
         response.raise_for_status()
     except RequestException:
-        logging.error('Forum {forum} is not reachable, can not start scraper'.format(forum=FORUM_HOME_PAGE_URL))
+        logging.error('Forum {forum} is not reachable, can not start the scraper'.format(forum=FORUM_HOME_PAGE_URL))
         sys.exit(1)
 
     # check if environment is set up correctly
