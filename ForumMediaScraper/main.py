@@ -15,20 +15,23 @@ from selenium.common.exceptions import WebDriverException as SeleniumWebDriverEx
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError as MongoServerSelectionTimeoutError
 
-from MediaProcessor import MediaProcessor, AlreadyProcessedException
+from ForumMediaScraper.MediaProcessor import MediaProcessor, AlreadyProcessedException
 
-#logging.basicConfig(filename='service.log', level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
 MONGO_INITDB_ROOT_PASSWORD = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
 MAX_SERVER_SELECTION_DELAY = 1
 
 FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
-GECKO_DRIVER_PATH = 'bin\\geckodriver.exe'
+GECKO_DRIVER_PATH = 'ForumMediaScraper\\bin\\geckodriver.exe'
 
 SCROLL_PAUSE_TIME = 0.5
-MAX_SCROLL_SECONDS = 10
+MAX_SCROLL_SECONDS = os.getenv('MAX_SCROLL_SECONDS')
 
 
 class WebDriver:
@@ -56,8 +59,8 @@ def main():
         sys.exit(1)
 
     # check if environment is set up correctly
-    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME:
-        logging.error('Environment not setup correctly, are the MONGO_INITDB variables set up?')
+    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not isinstance(MAX_SCROLL_SECONDS, int):
+        logging.error('Environment not setup correctly, are all environment variables set up?')
         sys.exit(1)
 
     try:
@@ -139,6 +142,10 @@ def main():
     except MongoServerSelectionTimeoutError as serverTimeout:
         logging.error('Could not create connection to mongoDB server: {err}'.format(err=serverTimeout))
         sys.exit(1)
+
+
+def start_scraper():
+    main()
 
 
 if __name__ == '__main__':
