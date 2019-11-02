@@ -59,7 +59,7 @@ def main():
         sys.exit(1)
 
     # check if environment is set up correctly
-    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not isinstance(MAX_SCROLL_SECONDS, int):
+    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not MAX_SCROLL_SECONDS.isdigit():
         logging.error('Environment not setup correctly, are all environment variables set up?')
         sys.exit(1)
 
