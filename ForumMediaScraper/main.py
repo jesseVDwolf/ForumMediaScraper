@@ -59,8 +59,12 @@ def main():
         sys.exit(1)
 
     # check if environment is set up correctly
-    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not hasattr(MAX_SCROLL_SECONDS, 'isdigit'):
+    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not MAX_SCROLL_SECONDS:
         logging.error('Environment not setup correctly, are all environment variables set up?')
+        sys.exit(1)
+
+    if not MAX_SCROLL_SECONDS.isdigit():
+        logging.error('MAX_SCROLL_SECONDS must be digit')
         sys.exit(1)
 
     try:
