@@ -59,7 +59,7 @@ def main():
         sys.exit(1)
 
     # check if environment is set up correctly
-    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not MAX_SCROLL_SECONDS.isdigit():
+    if not MONGO_INITDB_ROOT_PASSWORD or not MONGO_INITDB_ROOT_USERNAME or not hasattr(MAX_SCROLL_SECONDS, 'isdigit'):
         logging.error('Environment not setup correctly, are all environment variables set up?')
         sys.exit(1)
 
@@ -124,7 +124,7 @@ def main():
 
                     # Calculate new scroll height and compare with last scroll height
                     new_height = wd.execute_script("return document.body.scrollHeight")
-                    if new_height == last_height or start_time + timedelta(seconds=MAX_SCROLL_SECONDS) < datetime.utcnow():
+                    if new_height == last_height or start_time + timedelta(seconds=int(MAX_SCROLL_SECONDS)) < datetime.utcnow():
                         break
                     last_height = new_height
 
