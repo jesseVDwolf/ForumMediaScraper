@@ -1,4 +1,3 @@
-import re
 import requests
 import bs4
 import gridfs
@@ -31,10 +30,11 @@ class MediaProcessor:
     * external: ?
     """
 
-    def __init__(self, scraper_run_id: int, db: Database, fs: gridfs.GridFS):
+    def __init__(self, scraper_run_id: int, db: Database, fs: gridfs.GridFS, logger: logging.Logger):
         self.run_id = scraper_run_id
         self.mongo_db = db
         self.grid_fs = fs
+        self.logger = logger
         self.articles_processed = 0
         self.FORUM_ARTICLE_TYPES = [
             'post-container-with-button',   # https://9gag.com/gag/a7wwAyL
@@ -53,7 +53,7 @@ class MediaProcessor:
         self.last_start_article_id = str(last_runs[0].get('StartPostId')) if last_runs.count() > 0 else None
 
     def __del__(self):
-        logging.info('Crawler has finished scraping for reason: {}. Sending last data to database...'.format(self.stop_reason))
+        self.logger.info('Crawler has finished scraping for reason: {}. Sending last data to database...'.format(self.stop_reason))
         self.mongo_db['Runs'].update_one(
             {'_id': self.run_id},
             {'$set':
@@ -63,45 +63,6 @@ class MediaProcessor:
                  }
             }
         )
-
-    @staticmethod
-    def create_stream_list_regex(stream_id: str):
-        """
-        Given an id of a number smaller than 100, this function will give back
-        compiled regex that can be used to match any number above this id.
-        :param stream_id:
-        :return <class '_sre.SRE_Pattern'>:
-        """
-
-        # match the amount of numbers in stream id + 1 or more digit numbers
-        base_regex = r'[1-9]\d{%s,}' % str((len(stream_id)))
-
-        # if single digit and nine then base is enough
-        if len(stream_id) == 1 and int(stream_id) == 9:
-            return re.compile(base_regex)
-
-        # if single digit then add special regex
-        elif len(stream_id) == 1 and int(stream_id) != 9:
-            base_regex = base_regex + '|[%s-9]' % str(int(stream_id) + 1)
-            return re.compile(base_regex)
-
-        for idx, num in enumerate(stream_id):
-            if num == '9':
-                # round can be skipped since range contains no numbers
-                continue
-            elif idx == 0:
-                # match all numbers from {x}0 to 99 i.e. for 88 -> 89,90,91,92...99
-                base_regex = base_regex + '|[{x}-9]\d'.format(
-                    x=str(int(stream_id[stream_id.find(num)]) + 1)
-                )
-            elif idx == 1:
-                # match all numbers within the single digit range i.e. for 56 -> 57,58,59
-                base_regex = base_regex + '|{x}[{y}-9]'.format(
-                    x=str(int(stream_id[stream_id.find(num) - 1])),
-                    y=str(int(num) + 1)
-                )
-
-        return re.compile('stream-' + base_regex)
 
     def process(self, article: bs4.element.Tag):
         """
@@ -115,12 +76,12 @@ class MediaProcessor:
 
         # check for sensitive content (requires login)
         if article_container.find('div', {'class': 'nsfw-post'}):
-            logging.info('Sensitive article found, forum login not yet supported')
+            self.logger.info('Sensitive article found, forum login not yet supported')
             return
 
         # check for empty articles and skip these
         if not article.get('id'):
-            logging.info('Empty article found, moving to next article')
+            self.logger.info('Empty article found, moving to next article')
             return
 
         article_id = str(article.get('id')).strip()
@@ -153,11 +114,11 @@ class MediaProcessor:
             self.articles_processed = self.articles_processed + 1 if result.acknowledged else self.articles_processed
 
         except AttributeError:
-            logging.info('Processing of {} is in option list but not yet supported, skipping article {}'.format(article_type, article_short))
+            self.logger.info('Processing of {} is in option list but not yet supported, skipping article {}'.format(article_type, article_short))
         except KeyError:
-            logging.info('Processing of {} is not in option list, skipping article'.format(article_type, article_short))
+            self.logger.info('Processing of {} is not in option list, skipping article'.format(article_type, article_short))
         except Exception as InternalError:
-            logging.warning('Something went wrong during processing of article {}: {}'.format(article_short, InternalError))
+            self.logger.warning('Something went wrong during processing of article {}: {}'.format(article_short, InternalError))
 
     def _process_post_container(self, article: bs4.element.Tag) -> InsertOneResult:
         """
@@ -217,9 +178,9 @@ class MediaProcessor:
 
             # store post data in mongodb collection
             result = self.mongo_db['Posts'].insert_one(post_document)
-            logging.info('Article {} has been successfully processed and saved the database'.format(post_short_link))
+            self.logger.info('Article {} has been successfully processed and saved the database'.format(post_short_link))
             return result
 
         except RequestException:
-            logging.warning('Could not retrieve image {} during processing'.format(image_source))
+            self.logger.warning('Could not retrieve image {} during processing'.format(image_source))
             return None

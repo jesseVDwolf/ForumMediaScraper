@@ -1,1 +1,1 @@
-from .main import start_scraper
+from .main import ForumMediaScraper
