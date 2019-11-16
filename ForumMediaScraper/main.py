@@ -229,14 +229,11 @@ class ForumMediaScraper:
 
                 except AlreadyProcessedException:
                     del media_processor
-                    sys.exit(1)
 
         except SeleniumWebDriverException as driverException:
             self.logger.error('Could not create firefox driver using local geckodriver: {err}'.format(err=driverException.msg))
-            sys.exit(1)
         except MongoServerSelectionTimeoutError as serverTimeout:
             self.logger.error('Could not create connection to mongoDB server: {err}'.format(err=serverTimeout))
-            sys.exit(1)
 
 
 if __name__ == '__main__':
