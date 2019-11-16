@@ -7,19 +7,32 @@ Getting started
 ---------------
 The scraper requires a couple of things to work. Firstly, some environmental variables have to be set:
 
-* MONGO_INITDB_ROOT_USERNAME 
-* MONGO_INITDB_ROOT_PASSWORD
-* MOZ_HEADLESS
-* MAX_SCROLL_SECONDS 
+```bash
+#required
+export MONGO_INITDB_ROOT_USERNAME = username
+export MONGO_INITDB_ROOT_PASSWORD = pwd
+
+#optional
+export MOZ_HEADLESS = 1
+export MAX_SCROLL_SECONDS = 15
+export LOGGING_TYPE = file
+```
 
 The MONGO_INITDB variables are used to connect to a local MongoDB server (make sure the server is running
-reachable over localhost port 27017).Creation of the database, collections etcetera is done by the scraper. 
-The MOX_HEADLESS variable is optional and specifies if you want open firefox in headless mode, meaning that 
+reachable over localhost port 27017). Creation of the database, collections etcetera is done by the scraper.
+The MOZ_HEADLESS variable is optional and specifies if you want open firefox in headless mode, meaning that 
 no browser GUI opens. MAX_SCROLL_SECONDS defines for how long the scraper will keep scrolling down the page 
-to load new posts and scrape them.
+to load new posts and scrape them. LOGGING_TYPE specifies if you want the service its logs to be pushed to 
+stdout (a.k.a the terminal) or to a log file at ./ForumMediaScraper/service.log
 
-To then start the scraper all you have to do is import the start_scraper function from the ForumMediaScraper package
-and run this. If something was not set up correctly it will tell you directly.
+Secondly, use pip to install the packages specified in the requirements.txt file using the provided setup.py:\
+*pip install .*
 
-Prerequisites
--------------
+When this is all done. You can start the scraper by importing the ForumMediaScraper class from the ForumMediaScraper
+package and run the *start_scraper* function:
+```python
+from ForumMediaScraper import ForumMediaScraper
+
+media_scraper = ForumMediaScraper()
+media_scraper.start_scraper()
+```
