@@ -45,7 +45,7 @@ class ForumMediaScraper:
         self.MAX_SERVER_SELECTION_DELAY = 1
 
         self.FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
-        self.GECKO_DRIVER_PATH = 'ForumMediaScraper\\bin\\geckodriver.exe'
+        self.GECKO_DRIVER_PATH = 'bin\\geckodriver.exe'
 
         self.SCROLL_PAUSE_TIME = 0.5
         self.MAX_SCROLL_SECONDS = os.getenv('MAX_SCROLL_SECONDS') if os.environ.get('MAX_SCROLL_SECONDS') else "60"
@@ -159,7 +159,7 @@ class ForumMediaScraper:
         try:
             self.logger.info('Configuring gecko selenium webdriver for python..')
             web_driver_args = {
-                "executable_path": r'{}\{}'.format(os.getcwd(), self.GECKO_DRIVER_PATH),
+                "executable_path": r'{}\{}'.format(os.path.dirname(os.path.abspath(__file__)), self.GECKO_DRIVER_PATH),
                 "log_path": './ForumMediaScraper/log/geckodriver.log'
             }
 
