@@ -48,7 +48,7 @@ class ForumMediaScraper:
         self.GECKO_DRIVER_PATH = 'ForumMediaScraper\\bin\\geckodriver.exe'
 
         self.SCROLL_PAUSE_TIME = 0.5
-        self.MAX_SCROLL_SECONDS = os.getenv('MAX_SCROLL_SECONDS') if os.environ.get('MAX_SCROLL_SECONDS') else 60
+        self.MAX_SCROLL_SECONDS = os.getenv('MAX_SCROLL_SECONDS') if os.environ.get('MAX_SCROLL_SECONDS') else "60"
         self.LOGGING_TYPE = os.getenv('LOGGING_TYPE') if os.environ.get('LOGGING_TYPE') else 'default'
 
         # database related objects
@@ -81,7 +81,7 @@ class ForumMediaScraper:
             sys.exit(1)
 
         # check if environment is set up correctly
-        if not self.MONGO_INITDB_ROOT_PASSWORD or not self.MONGO_INITDB_ROOT_USERNAME or not self.MAX_SCROLL_SECONDS:
+        if not self.MONGO_INITDB_ROOT_PASSWORD or not self.MONGO_INITDB_ROOT_USERNAME:
             self.logger.error('Environment not setup correctly, are all environment variables set up?')
             sys.exit(1)
 
@@ -95,7 +95,7 @@ class ForumMediaScraper:
             - MONGO_INITDB_ROOT_PASSWORD = {} 
             - MAX_SCROLL_SECONDS = {} 
             - LOGGING_TYPE = {} 
-        '''.format(self.MONGO_INITDB_ROOT_USERNAME, self.MONGO_INITDB_ROOT_PASSWORD, self.MAX_SCROLL_SECONDS, self.LOGGING_TYPE))
+        '''.format(self.MONGO_INITDB_ROOT_USERNAME, self.MONGO_INITDB_ROOT_PASSWORD, str(self.MAX_SCROLL_SECONDS), self.LOGGING_TYPE))
 
         try:
             self.logger.info('Trying to connect to local MongoDB instance..')
