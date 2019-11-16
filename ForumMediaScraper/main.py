@@ -17,7 +17,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.errors import ServerSelectionTimeoutError as MongoServerSelectionTimeoutError
 
-from ForumMediaScraper.MediaProcessor import MediaProcessor, AlreadyProcessedException
+from .MediaProcessor import MediaProcessor, AlreadyProcessedException
 
 
 class _WebDriver:
