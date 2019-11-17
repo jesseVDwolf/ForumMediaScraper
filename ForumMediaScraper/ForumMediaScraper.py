@@ -37,7 +37,7 @@ class _WebDriver:
 
 class ForumMediaScraper:
     """
-    Main media scraper singleton class
+    Main media scraper as singleton class
     """
     def __init__(self):
         self.MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
