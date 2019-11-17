@@ -42,6 +42,7 @@ class ForumMediaScraper:
     def __init__(self):
         self.MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
         self.MONGO_INITDB_ROOT_PASSWORD = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
+        self.MONGO_INITDB_HOST = os.getenv('MONGO_INITDB_HOST') if os.environ.get('MONGO_INITDB_HOST') else '127.0.0.1'
         self.MAX_SERVER_SELECTION_DELAY = 1
 
         self.FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
@@ -100,9 +101,10 @@ class ForumMediaScraper:
         try:
             self.logger.info('Trying to connect to local MongoDB instance..')
             #  create mongo client to interact with local mongoDB instance
-            self.mongo_client = MongoClient('mongodb://{usr}:{pwd}@127.0.0.1'.format(
+            self.mongo_client = MongoClient('mongodb://{usr}:{pwd}@{host}'.format(
                 usr=urllib.parse.quote_plus(self.MONGO_INITDB_ROOT_USERNAME),
-                pwd=urllib.parse.quote_plus(self.MONGO_INITDB_ROOT_PASSWORD)),
+                pwd=urllib.parse.quote_plus(self.MONGO_INITDB_ROOT_PASSWORD),
+                host=urllib.parse.quote_plus(self.MONGO_INITDB_HOST)),
                 serverSelectionTimeoutMS=self.MAX_SERVER_SELECTION_DELAY
             )
 
@@ -157,7 +159,9 @@ class ForumMediaScraper:
 
     def start_scraper(self):
         try:
-            self.logger.info('Configuring gecko selenium webdriver for python..')
+            self.logger.info('Configuring gecko selenium webdriver for python at {}\{}..'.format(
+                os.path.dirname(os.path.abspath(__file__)), self.GECKO_DRIVER_PATH
+            ))
             web_driver_args = {
                 "executable_path": r'{}\{}'.format(os.path.dirname(os.path.abspath(__file__)), self.GECKO_DRIVER_PATH),
                 "log_path": './ForumMediaScraper/log/geckodriver.log'
