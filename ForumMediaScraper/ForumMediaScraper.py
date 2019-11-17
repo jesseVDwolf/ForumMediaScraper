@@ -46,7 +46,7 @@ class ForumMediaScraper:
         self.MAX_SERVER_SELECTION_DELAY = 1
 
         self.FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
-        self.GECKO_DRIVER_PATH = 'bin\\geckodriver.exe'
+        self.GECKO_DRIVER_PATH = os.getenv('GECKO_DRIVER_PATH')
 
         self.SCROLL_PAUSE_TIME = 0.5
         self.MAX_SCROLL_SECONDS = os.getenv('MAX_SCROLL_SECONDS') if os.environ.get('MAX_SCROLL_SECONDS') else "60"
@@ -84,6 +84,10 @@ class ForumMediaScraper:
         # check if environment is set up correctly
         if not self.MONGO_INITDB_ROOT_PASSWORD or not self.MONGO_INITDB_ROOT_USERNAME:
             self.logger.error('Environment not setup correctly, are all environment variables set up?')
+            sys.exit(1)
+
+        if not os.path.isfile(self.GECKO_DRIVER_PATH):
+            self.logger.error('GECKO_DRIVER_PATH is invalid')
             sys.exit(1)
 
         if not self.MAX_SCROLL_SECONDS.isdigit():
@@ -159,11 +163,9 @@ class ForumMediaScraper:
 
     def start_scraper(self):
         try:
-            self.logger.info('Configuring gecko selenium webdriver for python at {}\{}..'.format(
-                os.path.dirname(os.path.abspath(__file__)), self.GECKO_DRIVER_PATH
-            ))
+            self.logger.info('Configuring gecko selenium webdriver for python at {}..'.format(self.GECKO_DRIVER_PATH))
             web_driver_args = {
-                "executable_path": r'{}\{}'.format(os.path.dirname(os.path.abspath(__file__)), self.GECKO_DRIVER_PATH),
+                "executable_path": self.GECKO_DRIVER_PATH,
                 "log_path": './ForumMediaScraper/log/geckodriver.log'
             }
 
