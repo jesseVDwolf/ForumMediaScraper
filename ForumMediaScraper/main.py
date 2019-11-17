@@ -75,7 +75,7 @@ class ForumMediaScraper:
         try:
             response = requests.get(self.FORUM_HOME_PAGE_URL)
             response.raise_for_status()
-            self.logger.info('{} is only and available for scraping'.format(self.FORUM_HOME_PAGE_URL))
+            self.logger.info('{} is online and available for scraping'.format(self.FORUM_HOME_PAGE_URL))
         except RequestException:
             self.logger.error('Forum {} is not reachable, can not start scraper'.format(self.FORUM_HOME_PAGE_URL))
             sys.exit(1)
