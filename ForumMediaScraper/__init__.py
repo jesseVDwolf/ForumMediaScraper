@@ -1,1 +1,1 @@
-from .main import ForumMediaScraper
+from .ForumMediaScraper import ForumMediaScraper, MediaProcessor
