@@ -60,7 +60,7 @@ class ForumMediaScraper:
         'MONGO_INITDB_HOST': str,
         'MONGO_INITDB_PORT': int,
         'SCRAPER_MAX_SCROLL_SECONDS': int,
-        'SCRAPER_CREATE_SERVICE_LOG': str,
+        'SCRAPER_CREATE_SERVICE_LOG': bool,
         'SCRAPER_HEADLESS_MODE': bool,
         'WEBDRIVER_EXECUTABLE_PATH': str
     }
