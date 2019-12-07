@@ -14,7 +14,7 @@ export MONGO_INITDB_ROOT_PASSWORD = pwd
 
 #optional
 export MOZ_HEADLESS = 1
-export MAX_SCROLL_SECONDS = 15
+export MAX_SCROLL_SECONDS = 60
 export LOGGING_TYPE = file
 ```
 

@@ -66,7 +66,7 @@ class ForumMediaScraper:
         if os.environ.get('LOGGING_TYPE') == 'file':
             logging_args.update({'filename': './ForumMediaScraper/log/service.log'})
         if not os.path.isdir('ForumMediaScraper/log'):
-            os.mkdir('ForumMediaScraper/log')
+            os.makedirs('ForumMediaScraper/log')
         logging.basicConfig(**logging_args)
         self.logger.info('###############FORUM MEDIA SCRAPER INITIALIZATION###############')
         self._validate_scrape_conditions()
