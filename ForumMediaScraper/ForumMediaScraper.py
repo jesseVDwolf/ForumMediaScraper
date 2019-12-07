@@ -20,6 +20,14 @@ from pymongo.errors import ServerSelectionTimeoutError as MongoServerSelectionTi
 from .MediaProcessor import MediaProcessor, AlreadyProcessedException
 
 
+class ScrapeConditionsNotMetException(Exception):
+    """
+    Raised when one of the conditions for the scraper to be able
+    to scrape is not met. Thrown from _check_scrape_conditions method
+    """
+    pass
+
+
 class _WebDriver:
     """
     Use a context manager for the selenium webdriver to make sure that
@@ -37,24 +45,46 @@ class _WebDriver:
 
 class ForumMediaScraper:
     """
-    Main media scraper as singleton class
+    Main media scraper as singleton class.
+    The scraper exposes its configuration settings. This can be updated through the update_config function.
     """
-    def __init__(self):
-        self.MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
-        self.MONGO_INITDB_ROOT_PASSWORD = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
-        self.MONGO_INITDB_HOST = os.getenv('MONGO_INITDB_HOST') if os.environ.get('MONGO_INITDB_HOST') else '127.0.0.1'
-        self.MAX_SERVER_SELECTION_DELAY = 1
+    _WEBDRIVER_DEFAULT_PATH = './geckodriver'
 
-        self.FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
-        self.GECKO_DRIVER_PATH = os.getenv('GECKO_DRIVER_PATH')
+    _MONGO_SERVER_TIMEOUT = 1
 
-        self.SCROLL_PAUSE_TIME = 0.5
-        self.MAX_SCROLL_SECONDS = os.getenv('MAX_SCROLL_SECONDS') if os.environ.get('MAX_SCROLL_SECONDS') else "60"
-        self.LOGGING_TYPE = os.getenv('LOGGING_TYPE') if os.environ.get('LOGGING_TYPE') else 'default'
+    _SCRAPER_SCROLL_PAUSE_TIME = 0.5
+    _SCRAPER_FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
+    _SCRAPER_OPTIONAL_SETTINGS = {
+        'MONGO_INITDB_ROOT_USERNAME': str,
+        'MONGO_INITDB_ROOT_PASSWORD': str,
+        'MONGO_INITDB_HOST': str,
+        'MONGO_INITDB_PORT': int,
+        'SCRAPER_MAX_SCROLL_SECONDS': int,
+        'SCRAPER_CREATE_SERVICE_LOG': str,
+        'SCRAPER_HEADLESS_MODE': bool,
+        'WEBDRIVER_EXECUTABLE_PATH': str
+    }
 
-        # database related objects
-        self.mongo_client = MongoClient
-        self.database = Database
+    def __init__(self, config: dict={}, gecko_driver_path: str=_WEBDRIVER_DEFAULT_PATH):
+        if sys.platform not in ['darwin', 'linux', 'win32']:
+            raise OSError('Unsupported operating system %s' % str(sys.platform))
+
+        # create default configuration and update if additional config was given
+        self._config = {'SCRAPER_MAX_SCROLL_SECONDS': 60, 'WEBDRIVER_EXECUTABLE_PATH': gecko_driver_path}
+        self._validate_config(config)
+        self.update_config(config=config)
+
+        # create database related objects
+        self._mongo_client = MongoClient
+        self._mongo_database = Database
+
+        # create log directory
+        if not os.path.isdir('log'):
+            os.mkdir('log')
+
+        # set MOZ_HEADLESS if SCRAPER_HEADLESS_MODE is set to True
+        if self._config.get('SCRAPER_HEADLESS_MODE'):
+            os.environ['MOZ_HEADLESS'] = '1'
 
         # set up service logging
         self.logger = logging.getLogger(__name__)
@@ -63,64 +93,31 @@ class ForumMediaScraper:
             "level": logging.INFO,
             "datefmt": '%Y-%m-%d %H:%M:%S'
         }
-        if os.environ.get('LOGGING_TYPE') == 'file':
-            logging_args.update({'filename': './ForumMediaScraper/log/service.log'})
-        if not os.path.isdir('ForumMediaScraper/log'):
-            os.makedirs('ForumMediaScraper/log')
+        if self._config.get('scraper_create_service_log'):
+            logging_args.update({'filename': './log/service.log'})
         logging.basicConfig(**logging_args)
-        self.logger.info('###############FORUM MEDIA SCRAPER INITIALIZATION###############')
-        self._validate_scrape_conditions()
 
-    def _validate_scrape_conditions(self):
-        # check if forum is online and accessable
-        try:
-            response = requests.get(self.FORUM_HOME_PAGE_URL)
-            response.raise_for_status()
-            self.logger.info('{} is online and available for scraping'.format(self.FORUM_HOME_PAGE_URL))
-        except RequestException:
-            self.logger.error('Forum {} is not reachable, can not start scraper'.format(self.FORUM_HOME_PAGE_URL))
-            sys.exit(1)
+        # check if conditions for scraper are met
+        self._check_scrape_conditions()
 
-        # check if environment is set up correctly
-        if not self.MONGO_INITDB_ROOT_PASSWORD or not self.MONGO_INITDB_ROOT_USERNAME:
-            self.logger.error('Environment not setup correctly, are all environment variables set up?')
-            sys.exit(1)
-
-        if not os.path.isfile(self.GECKO_DRIVER_PATH):
-            self.logger.error('GECKO_DRIVER_PATH is invalid')
-            sys.exit(1)
-
-        if not self.MAX_SCROLL_SECONDS.isdigit():
-            self.logger.error('MAX_SCROLL_SECONDS must be digit')
-            sys.exit(1)
-
-        self.logger.info('''\n
-            Environment set up with the following settings: 
-            - MONGO_INITDB_ROOT_USERNAME = {} 
-            - MONGO_INITDB_ROOT_PASSWORD = {} 
-            - MAX_SCROLL_SECONDS = {} 
-            - LOGGING_TYPE = {} 
-        '''.format(self.MONGO_INITDB_ROOT_USERNAME, self.MONGO_INITDB_ROOT_PASSWORD, str(self.MAX_SCROLL_SECONDS), self.LOGGING_TYPE))
-
-        try:
-            self.logger.info('Trying to connect to local MongoDB instance..')
-            #  create mongo client to interact with local mongoDB instance
-            self.mongo_client = MongoClient('mongodb://{usr}:{pwd}@{host}'.format(
-                usr=urllib.parse.quote_plus(self.MONGO_INITDB_ROOT_USERNAME),
-                pwd=urllib.parse.quote_plus(self.MONGO_INITDB_ROOT_PASSWORD),
-                host=urllib.parse.quote_plus(self.MONGO_INITDB_HOST)),
-                serverSelectionTimeoutMS=self.MAX_SERVER_SELECTION_DELAY
-            )
-
-            # force connection on a request to check if server is online
-            self.mongo_client.server_info()
-            self.database = self.mongo_client['9GagMedia']
-            self.mongo_gridfs = gridfs.GridFS(database=self.database)
-            self.logger.info('MongoDB connection setup successfully, ready to store data')
-
-        except MongoServerSelectionTimeoutError as serverTimeout:
-            self.logger.error('Could not create connection to mongoDB server: {err}'.format(err=serverTimeout))
-            sys.exit(1)
+    @staticmethod
+    def _validate_config(d: dict):
+        """
+        Check if the configuration specified for the scraper is
+        given in the correct format and given options are valid options
+        :param d:
+        :return:
+        """
+        if isinstance(d, dict):
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    raise TypeError('No nested dicts allowed for config options')
+                if k not in ForumMediaScraper._SCRAPER_OPTIONAL_SETTINGS.keys():
+                    raise NameError('No such option exists: %s' % str(k))
+                if not isinstance(v, ForumMediaScraper._SCRAPER_OPTIONAL_SETTINGS.get(k)):
+                    raise TypeError('Option data type does not match expected type: %s' % str(v))
+        else:
+            raise TypeError('Use a dict to update the scraper its configuration')
 
     @staticmethod
     def _create_stream_list_regex(stream_id: str):
@@ -161,25 +158,77 @@ class ForumMediaScraper:
 
         return re.compile('stream-' + base_regex)
 
-    def start_scraper(self):
+    def get_config(self):
+        return self._config
+
+    def update_config(self, config: dict):
+        self._validate_config(config)
+        return self._config.update(config)
+
+    def _check_scrape_conditions(self):
         try:
-            self.logger.info('Configuring gecko selenium webdriver for python at {}..'.format(self.GECKO_DRIVER_PATH))
+            # forum must be online and available for scraping
+            response = requests.get(ForumMediaScraper._SCRAPER_FORUM_HOME_PAGE_URL)
+            response.raise_for_status()
+            self.logger.info('%s is online and available for scraping' % ForumMediaScraper._SCRAPER_FORUM_HOME_PAGE_URL)
+
+            #  create mongo client to interact with local mongoDB instance
+            connection_args = {
+                'host': None,
+                'serverSelectionTimeoutMS': ForumMediaScraper._MONGO_SERVER_TIMEOUT
+            }
+
+            if self._config.get('MONGO_INITDB_HOST'):
+                connection_args['host'] = 'mongodb://%s' % str(self._config.get('MONGO_INITDB_HOST'))
+
+            if self._config.get('MONGO_INITDB_ROOT_USERNAME'):
+                if not self._config.get('MONGO_INITDB_HOST'):
+                    raise ScrapeConditionsNotMetException('Specify mongo host if you use username and password auth')
+
+                connection_args['host'] = connection_args.get('host')[:10] + '{usr}:{pwd}@'.format(
+                    usr=self._config.get('MONGO_INITDB_ROOT_USERNAME'),
+                    pwd=self._config.get('MONGO_INITDB_ROOT_PASSWORD')
+                ) + connection_args.get('host')[10:]
+
+            if self._config.get('MONGO_INITDB_PORT'):
+                connection_args.update({'port': self._config.get('MONGO_INITDB_PORT')})
+            self._mongo_client = MongoClient(**connection_args)
+
+            # force connection on a request to check if server is online
+            self._mongo_client.server_info()
+            self._mongo_database = self._mongo_client['9GagMedia']
+            self._mongo_gridfs = gridfs.GridFS(database=self._mongo_database)
+
+        except RequestException:
+            self.logger.error(
+                'Forum %s is not reachable, can not start scraper' % ForumMediaScraper._SCRAPER_FORUM_HOME_PAGE_URL)
+            raise ScrapeConditionsNotMetException
+        except MongoServerSelectionTimeoutError as serverTimeout:
+            self.logger.error('Could not create connection to mongoDB server: %s ' % serverTimeout)
+            raise ScrapeConditionsNotMetException
+
+    def run(self):
+        try:
+            # check scraper conditions
+            self._check_scrape_conditions()
+
+            self.logger.info('Configuring gecko selenium webdriver for python at {}..'.format(self._config.get('WEBDRIVER_EXECUTABLE_PATH')))
             web_driver_args = {
-                "executable_path": self.GECKO_DRIVER_PATH,
-                "log_path": './ForumMediaScraper/log/geckodriver.log'
+                "executable_path": self._config.get('WEBDRIVER_EXECUTABLE_PATH'),
+                "log_path": './log/geckodriver.log'
             }
 
             # try to set up firefox driver for selenium and retrieve forum home page
             with _WebDriver(SeleniumWebdriver.Firefox(**web_driver_args)) as wd:
-                wd.get(self.FORUM_HOME_PAGE_URL)
-                self.logger.info('Successfully loaded {}'.format(self.FORUM_HOME_PAGE_URL))
+                wd.get(ForumMediaScraper._SCRAPER_FORUM_HOME_PAGE_URL)
+                self.logger.info('Successfully loaded {}'.format(ForumMediaScraper._SCRAPER_FORUM_HOME_PAGE_URL))
                 self.logger.info('###############FORUM MEDIA SCRAPER SCRAPE LOG###############')
 
                 last_height = wd.execute_script("return document.body.scrollHeight")
                 start_time = datetime.utcnow()
 
                 # create run entry for scraper in mongo database
-                result = self.database['Runs'].insert_one({
+                result = self._mongo_database['Runs'].insert_one({
                     'StartScrapeTime': datetime.utcnow(),
                     'EndScrapeTime': None,
                     'PostsProcessed': 0,
@@ -194,8 +243,8 @@ class ForumMediaScraper:
                 stream_tracker = []
                 media_processor = MediaProcessor(
                     scraper_run_id=result.inserted_id,
-                    db=self.database,
-                    fs=self.mongo_gridfs,
+                    db=self._mongo_database,
+                    fs=self._mongo_gridfs,
                     logger=self.logger
                 )
 
@@ -205,7 +254,7 @@ class ForumMediaScraper:
                         wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
                         # Wait to load page
-                        time.sleep(self.SCROLL_PAUSE_TIME)
+                        time.sleep(ForumMediaScraper._SCRAPER_SCROLL_PAUSE_TIME)
 
                         # build regex search for stream using last know stream id
                         last_stream_id = stream_tracker[-1] if len(stream_tracker) > 0 else '0'
@@ -224,8 +273,7 @@ class ForumMediaScraper:
 
                         # Calculate new scroll height and compare with last scroll height
                         new_height = wd.execute_script("return document.body.scrollHeight")
-                        if new_height == last_height or start_time + timedelta(
-                                seconds=int(self.MAX_SCROLL_SECONDS)) < datetime.utcnow():
+                        if new_height == last_height or start_time + timedelta(seconds=int(self._config.get('SCRAPER_MAX_SCROLL_SECONDS'))) < datetime.utcnow():
                             break
                         last_height = new_height
 
@@ -242,6 +290,3 @@ class ForumMediaScraper:
             self.logger.error('Could not create connection to mongoDB server: {err}'.format(err=serverTimeout))
 
 
-if __name__ == '__main__':
-    media_scraper = ForumMediaScraper()
-    media_scraper.start_scraper()
