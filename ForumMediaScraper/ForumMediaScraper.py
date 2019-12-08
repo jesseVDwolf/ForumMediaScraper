@@ -97,9 +97,6 @@ class ForumMediaScraper:
             logging_args.update({'filename': './log/service.log'})
         logging.basicConfig(**logging_args)
 
-        # check if conditions for scraper are met
-        self._check_scrape_conditions()
-
     @staticmethod
     def _validate_config(d: dict):
         """
