@@ -1,1 +1,1 @@
-from .ForumMediaScraper import ForumMediaScraper
+from .ForumMediaScraper import ForumMediaScraper, ScrapeConditionsNotMetException
