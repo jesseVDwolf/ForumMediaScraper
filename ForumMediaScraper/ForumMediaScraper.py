@@ -6,7 +6,6 @@ import requests
 import bs4
 import gridfs
 import logging
-import urllib.parse
 from requests.exceptions import RequestException
 from datetime import datetime, timedelta
 
@@ -62,7 +61,8 @@ class ForumMediaScraper:
         'SCRAPER_MAX_SCROLL_SECONDS': int,
         'SCRAPER_CREATE_SERVICE_LOG': bool,
         'SCRAPER_HEADLESS_MODE': bool,
-        'WEBDRIVER_EXECUTABLE_PATH': str
+        'WEBDRIVER_EXECUTABLE_PATH': str,
+        'WEBDRIVER_BROWSER_EXECUTABLE_PATH': str
     }
 
     def __init__(self, config: dict={}, gecko_driver_path: str=_WEBDRIVER_DEFAULT_PATH):
@@ -212,7 +212,8 @@ class ForumMediaScraper:
             self.logger.info('Configuring gecko selenium webdriver for python at {}..'.format(self._config.get('WEBDRIVER_EXECUTABLE_PATH')))
             web_driver_args = {
                 "executable_path": self._config.get('WEBDRIVER_EXECUTABLE_PATH'),
-                "log_path": './log/geckodriver.log'
+                "log_path": './log/geckodriver.log',
+                "firefox_binary": self._config.get('WEBDRIVER_BROWSER_EXECUTABLE_PATH')
             }
 
             # try to set up firefox driver for selenium and retrieve forum home page
@@ -283,6 +284,8 @@ class ForumMediaScraper:
 
         except SeleniumWebDriverException as driverException:
             self.logger.error('Could not create firefox driver using local geckodriver: {err}'.format(err=driverException.msg))
+        except OSError as oserr:
+            self.logger.error('Failed to find firefox executable: {err}'.format(err=oserr))
         except MongoServerSelectionTimeoutError as serverTimeout:
             self.logger.error('Could not create connection to mongoDB server: {err}'.format(err=serverTimeout))
 
