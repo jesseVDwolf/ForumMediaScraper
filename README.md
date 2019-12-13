@@ -29,12 +29,12 @@ Setup
 Use git clone to download the repository:
 
 ```bash
-git clone https://github.com/jesseVDwolf/ForumMediaScraper.git
+$ git clone https://github.com/jesseVDwolf/ForumMediaScraper.git
 ```
 
 Install the package using pip. Make sure you're in the same directory as the setup.py file:
 ```bash
-pip install .
+$ pip install .
 ```
 
 Start using the ForumMediaScraper:
