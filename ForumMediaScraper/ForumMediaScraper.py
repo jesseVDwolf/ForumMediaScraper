@@ -42,7 +42,7 @@ class _WebDriver:
         self.driver.quit()
 
 
-class ForumMediaScraper:
+class ForumMediaScraper(object):
     """
     Main media scraper as singleton class.
     The scraper exposes its configuration settings. This can be updated through the update_config function.
@@ -112,7 +112,7 @@ class ForumMediaScraper:
                 if k not in ForumMediaScraper._SCRAPER_OPTIONAL_SETTINGS.keys():
                     raise NameError('No such option exists: %s' % str(k))
                 if not isinstance(v, ForumMediaScraper._SCRAPER_OPTIONAL_SETTINGS.get(k)):
-                    raise TypeError('Option data type does not match expected type: %s' % str(v))
+                    raise TypeError('Option %s it\'s data type does not match expected type: %s' % (str(k), str(v)))
         else:
             raise TypeError('Use a dict to update the scraper its configuration')
 
