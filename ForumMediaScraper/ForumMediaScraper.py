@@ -65,12 +65,12 @@ class ForumMediaScraper(object):
         'WEBDRIVER_BROWSER_EXECUTABLE_PATH': str
     }
 
-    def __init__(self, config: dict={}, gecko_driver_path: str=_WEBDRIVER_DEFAULT_PATH):
+    def __init__(self, config: dict={}):
         if sys.platform not in ['darwin', 'linux', 'win32']:
             raise OSError('Unsupported operating system %s' % str(sys.platform))
 
         # create default configuration and update if additional config was given
-        self._config = {'SCRAPER_MAX_SCROLL_SECONDS': 60, 'WEBDRIVER_EXECUTABLE_PATH': gecko_driver_path}
+        self._config = {'SCRAPER_MAX_SCROLL_SECONDS': 60, 'WEBDRIVER_EXECUTABLE_PATH': ForumMediaScraper._WEBDRIVER_DEFAULT_PATH}
         self._validate_config(config)
         self.update_config(config=config)
 
