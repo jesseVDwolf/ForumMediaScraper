@@ -132,7 +132,8 @@ class MediaProcessor:
 
         try:
             # get metadata for GridFS storage of the picture
-            image_source = str(article.find('picture').find('img')['src'])
+            pics = [pic for pic in article.find_all('picture') if pic.find('img').get('style')]
+            image_source = str(pics[0].find('img').get('src'))
             file_name = image_source[image_source.rfind('/') + 1: len(image_source)]
             metadata = {
                 'Filename': file_name,
@@ -142,6 +143,8 @@ class MediaProcessor:
             }
             response = requests.get(image_source)
             response.raise_for_status()
+
+            self.logger.debug('Found image at %s' % image_source)
 
             # store image in mongodb using gridfs filesystem
             media_id = self.grid_fs.put(response.content, **metadata)

@@ -90,10 +90,10 @@ class ForumMediaScraper(object):
         self.logger = logging.getLogger(__name__)
         logging_args = {
             "format": '%(asctime)s %(levelname)-8s %(message)s',
-            "level": logging.INFO,
+            "level": logging.DEBUG,
             "datefmt": '%Y-%m-%d %H:%M:%S'
         }
-        if self._config.get('scraper_create_service_log'):
+        if self._config.get('SCRAPER_CREATE_SERVICE_LOG'):
             logging_args.update({'filename': './log/service.log'})
         logging.basicConfig(**logging_args)
 
