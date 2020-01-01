@@ -130,12 +130,12 @@ class ForumMediaScraper(object):
 
         # if single digit and nine then base is enough
         if len(stream_id) == 1 and int(stream_id) == 9:
-            return re.compile(base_regex)
+            return re.compile('stream-' + base_regex)
 
         # if single digit then add special regex
         elif len(stream_id) == 1 and int(stream_id) != 9:
             base_regex = base_regex + '|[%s-9]' % str(int(stream_id) + 1)
-            return re.compile(base_regex)
+            return re.compile('stream-' + base_regex)
 
         for idx, num in enumerate(stream_id):
             if num == '9':
