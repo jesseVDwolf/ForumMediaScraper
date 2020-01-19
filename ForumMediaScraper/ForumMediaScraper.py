@@ -51,7 +51,7 @@ class ForumMediaScraper(object):
 
     _MONGO_SERVER_TIMEOUT = 1
 
-    _SCRAPER_SCROLL_PAUSE_TIME = 0.5
+    _SCRAPER_SCROLL_PAUSE_TIME = 1.5
     _SCRAPER_FORUM_HOME_PAGE_URL = "https://9gag.com/hot"
     _SCRAPER_OPTIONAL_SETTINGS = {
         'MONGO_INITDB_ROOT_USERNAME': str,
