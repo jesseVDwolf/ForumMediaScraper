@@ -18,9 +18,11 @@ the config:
 | MONGO_INITDB_ROOT_PASSWORD| str | Password used to connect to the mongo database server | None |
 | MONGO_INITDB_HOST| str | Hostname (i.e. localhost) | None |
 | MONGO_INITDB_PORT| int | Port the mongo database server is listening on | 27017 |
+| SCRAPER_FORUM_NAME| str | Name of forum to scrape | 9gag |
 | SCRAPER_MAX_SCROLL_SECONDS| int | How many seconds will the scraper keep scanning the 9gag hot page | 60 |
 | SCRAPER_CREATE_SERVICE_LOG| bool | True if you want the scraper to push its logs to a file instead of stdout | False |
 | SCRAPER_HEADLESS_MODE| bool | Used to set MOZ_HEADLESS which if set to true will run firefox headless | True |
+| WEBDRIVER_LOGDIR| str | directory to write geckodriver logs to | ./log/geckodriver.log |
 | WEBDRIVER_EXECUTABLE_PATH| str | Directory path to the geckodriver executable. | ./geckodriver |
 | WEBDRIVER_BROWSER_EXECUTABLE_PATH| str | Directory path to the firefox executable | None |
 
@@ -39,18 +41,18 @@ $ pip install .
 
 Start using the ForumMediaScraper:
 ```python
-from ForumMediaScraper import ForumMediaScraper
+from ForumMediaScraper.Scraper import ScraperConfig, SeleniumScraper
 
-config = {
+config = ScraperConfig({
+    'WEBDRIVER_EXECUTABLE_PATH': './drivers/geckodriver-win.exe',
     'MONGO_INITDB_ROOT_USERNAME': 'admin',
-    'MONGO_INITDB_ROOT_PASSWORD': 'Noobmaster69',
-    'MONGO_INITDB_HOST': '127.0.0.1',
-    'WEBDRIVER_EXECUTABLE_PATH': geckodriver-win.exe,
-    'SCRAPER_HEADLESS_MODE': True,
+    'MONGO_INITDB_ROOT_PASSWORD': 'password123',
+    'SCRAPER_CREATE_LOGFILE': True,
+    'SCRAPER_HEADLESS_MODE': False,
+    'SCRAPER_MAX_SCROLL_SECONDS': 40,
     'WEBDRIVER_BROWSER_EXECUTABLE_PATH': 'C:\\Program Files\\Mozilla Firefox\\firefox.exe'
-}
-
-scraper = ForumMediaScraper(config=config)
+})
+scraper = SeleniumScraper(config)
 scraper.run()
 ```
 
