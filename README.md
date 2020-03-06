@@ -45,7 +45,7 @@ config = {
     'MONGO_INITDB_ROOT_USERNAME': 'admin',
     'MONGO_INITDB_ROOT_PASSWORD': 'Noobmaster69',
     'MONGO_INITDB_HOST': '127.0.0.1',
-    'WEBDRIVER_EXECUTABLE_PATH': './geckodriver.exe',
+    'WEBDRIVER_EXECUTABLE_PATH': geckodriver-win.exe,
     'SCRAPER_HEADLESS_MODE': True,
     'WEBDRIVER_BROWSER_EXECUTABLE_PATH': 'C:\\Program Files\\Mozilla Firefox\\firefox.exe'
 }
