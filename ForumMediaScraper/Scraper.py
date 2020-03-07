@@ -3,6 +3,7 @@ import re
 import sys
 import bs4
 import time
+import json
 import gridfs
 import logging
 import requests
@@ -79,6 +80,12 @@ class ScraperConfig:
 
     def __setitem__(self, key, value):
         self._config[key] = value
+
+    def update(self, d: dict):
+        return self._config.update(d)
+
+    def to_json(self):
+        return json.dumps(self._config)
 
     def get_mongo_config(self) -> dict:
         return ({
