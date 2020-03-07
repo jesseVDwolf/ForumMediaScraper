@@ -70,6 +70,8 @@ class ScraperConfig:
         'WEBDRIVER_BROWSER_EXECUTABLE_PATH': None
     }
 
+    _iter_index = 0
+
     def __init__(self, config: dict={}):
         self._config = {}
         for key, value in self._SCRAPER_SETTINGS.items(): self._config.update({key: value})
@@ -80,6 +82,17 @@ class ScraperConfig:
 
     def __setitem__(self, key, value):
         self._config[key] = value
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        idx = self._iter_index
+        if idx is None or idx >= len(self._config):
+            self._iter_index = None
+            raise StopIteration()
+        self._iter_index = idx + 1
+        return list(self._config.keys())[idx], list(self._config.values())[idx]
 
     def update(self, d: dict):
         return self._config.update(d)
