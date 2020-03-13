@@ -98,9 +98,6 @@ class ScraperConfig:
         self._config.update(d)
         return self
 
-    def to_json(self):
-        return json.dumps(self._config)
-
     def get_mongo_config(self) -> dict:
         return ({
             'host': self._config['MONGO_INITDB_HOST'],
