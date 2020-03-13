@@ -88,14 +88,15 @@ class ScraperConfig:
 
     def __next__(self):
         idx = self._iter_index
-        if idx is None or idx >= len(self._config):
-            self._iter_index = None
+        if idx >= len(self._config):
+            self._iter_index = 0
             raise StopIteration()
         self._iter_index = idx + 1
         return list(self._config.keys())[idx], list(self._config.values())[idx]
 
     def update(self, d: dict):
-        return self._config.update(d)
+        self._config.update(d)
+        return self
 
     def to_json(self):
         return json.dumps(self._config)
