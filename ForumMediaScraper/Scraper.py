@@ -75,10 +75,11 @@ class ScraperConfig:
         self._config = {}
         for key, value in self._SCRAPER_SETTINGS.items():
             if os.getenv(key):
-                config[key] = value[0](os.getenv(key))
+                self._config[key] = value[0](os.getenv(key)) if os.getenv(key) != "None" else None
+            elif config.get(key):
+                self._config[key] = config[key]
             else:
-                config[key] = value[1]
-        self._config.update(config)
+                self._config[key] = value[1]
 
     def __getitem__(self, item):
         return self._config[item]
@@ -154,6 +155,7 @@ class SeleniumScraper(object):
 
         if self.config['SCRAPER_HEADLESS_MODE']:
             os.environ['MOZ_HEADLESS'] = '1'
+        print(self.config.get_webdriver_config())
         self._webdriver = SeleniumWebdriver.Firefox(**self.config.get_webdriver_config())
 
     @staticmethod
