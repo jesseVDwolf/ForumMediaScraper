@@ -16,7 +16,7 @@ from requests.exceptions import RequestException
 from selenium import webdriver as SeleniumWebdriver
 from pymongo.errors import ServerSelectionTimeoutError as MongoServerSelectionTimeoutError
 
-WEBDRIVER_DEFAULT_PATH = './geckodriver'
+WEBDRIVER_DEFAULT_PATH = 'geckodriver'
 WEBDRIVER_DEFAULT_LOGDIR = './log/geckodriver.log'
 
 MONGO_SERVER_TIMEOUT = 1
