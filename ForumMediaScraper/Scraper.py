@@ -3,7 +3,6 @@ import re
 import sys
 import bs4
 import time
-import json
 import gridfs
 import logging
 import requests
@@ -55,26 +54,30 @@ _SCRAPER_ASCII_ART = """
 class ScraperConfig:
 
     _SCRAPER_SETTINGS = {
-        'MONGO_INITDB_ROOT_USERNAME': '',
-        'MONGO_INITDB_ROOT_PASSWORD': '',
-        'MONGO_INITDB_HOST': 'localhost',
-        'MONGO_INITDB_PORT': 27017,
+        'MONGO_INITDB_ROOT_USERNAME': (str, ''),
+        'MONGO_INITDB_ROOT_PASSWORD': (str, ''),
+        'MONGO_INITDB_HOST': (str, 'localhost'),
+        'MONGO_INITDB_PORT': (int, 27017),
 
-        'SCRAPER_FORUM_NAME': SCRAPER_DEFAULT_FORUM,
-        'SCRAPER_MAX_SCROLL_SECONDS': SCRAPER_DEFAULT_MAX_SCROLL_SECONDS,
-        'SCRAPER_CREATE_LOGFILE': False,
-        'SCRAPER_HEADLESS_MODE': True,
+        'SCRAPER_FORUM_NAME': (str, SCRAPER_DEFAULT_FORUM),
+        'SCRAPER_MAX_SCROLL_SECONDS': (str, SCRAPER_DEFAULT_MAX_SCROLL_SECONDS),
+        'SCRAPER_CREATE_LOGFILE': (bool, False),
+        'SCRAPER_HEADLESS_MODE': (bool, True),
 
-        'WEBDRIVER_LOGDIR': WEBDRIVER_DEFAULT_LOGDIR,
-        'WEBDRIVER_EXECUTABLE_PATH': WEBDRIVER_DEFAULT_PATH,
-        'WEBDRIVER_BROWSER_EXECUTABLE_PATH': None
+        'WEBDRIVER_LOGDIR': (str, WEBDRIVER_DEFAULT_LOGDIR),
+        'WEBDRIVER_EXECUTABLE_PATH': (str, WEBDRIVER_DEFAULT_PATH),
+        'WEBDRIVER_BROWSER_EXECUTABLE_PATH': (str, None)
     }
 
     _iter_index = 0
 
     def __init__(self, config: dict={}):
         self._config = {}
-        for key, value in self._SCRAPER_SETTINGS.items(): self._config.update({key: value})
+        for key, value in self._SCRAPER_SETTINGS.items():
+            if os.getenv(key):
+                config[key] = value[0](os.getenv(key))
+            else:
+                config[key] = value[1]
         self._config.update(config)
 
     def __getitem__(self, item):
