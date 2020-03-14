@@ -155,7 +155,6 @@ class SeleniumScraper(object):
 
         if self.config['SCRAPER_HEADLESS_MODE']:
             os.environ['MOZ_HEADLESS'] = '1'
-        print(self.config.get_webdriver_config())
         self._webdriver = SeleniumWebdriver.Firefox(**self.config.get_webdriver_config())
 
     @staticmethod
